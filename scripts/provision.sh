@@ -124,6 +124,11 @@ cat > /etc/apache2/sites-available/northbridge.conf <<VHOST
     ErrorLog \${APACHE_LOG_DIR}/northbridge_error.log
     CustomLog \${APACHE_LOG_DIR}/northbridge_access.log combined
 
+    # Shared runtime includes are never meant to be fetched directly.
+    <DirectoryMatch "$PORTAL_DIR/includes">
+        Require all denied
+    </DirectoryMatch>
+
     # The SQLite database is only reachable through the application,
     # never served to the browser directly.
     <FilesMatch "\.(db|sqlite|sqlite3)$">
