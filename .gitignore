@@ -1,0 +1,15 @@
+# Vagrant
+.vagrant/
+
+# Generated SQLite databases (built by scripts/provision.sh)
+*.db
+*.sqlite
+*.sqlite3
+www/database/
+
+# Local environment / secret decoys are deployment-generated
+.env
+
+# OS noise
+Thumbs.db
+.DS_Store
