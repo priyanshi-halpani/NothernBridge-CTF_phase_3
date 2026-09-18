@@ -1,0 +1,16 @@
+# Friendlier student-portal URLs: /profile and /marks resolve to the
+# corresponding pages (auth enforcement happens inside the PHP pages).
+Options -Indexes
+
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^profile/?$ profile.php [L,QSA]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^marks/?$ marks.php [L,QSA]
+
+# Serve branded 404/500 pages for unknown routes.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . - [R=404,L]
