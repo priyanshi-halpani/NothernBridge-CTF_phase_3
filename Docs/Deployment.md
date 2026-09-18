@@ -56,7 +56,8 @@ Steps performed:
 1. Updates packages and installs `apache2`, `php`, `libapache2-mod-php`, `php-sqlite3`, `sqlite3`, `git`, `curl`, `rsync`.
 2. Clones (or pulls) `PORTAL_REPO` at `PORTAL_BRANCH` into `/opt/northbridge-src`.
 3. Installs the app from `PORTAL_SUBDIR` into `PORTAL_DIR` — the `database/` directory is excluded from the sync.
-4. Enables Apache modules (`rewrite`, `php`), writes the `northbridge` virtual host pointing at `PORTAL_DIR` with custom `ErrorDocument` directives (`404.html` / `500.html`), disables directory listing, blocks direct `*.db` serving, and applies production PHP settings (display errors off, logging on).
+4. Enables Apache modules (`rewrite`, `php`), writes the `northbridge` virtual host pointing at `PORTAL_DIR` with custom `ErrorDocument` directives (`404.html` / `500.html`), disables directory listing, blocks direct `*.db` serving, denies direct access to `PORTAL_DIR/includes`, and applies production PHP settings (display errors off, logging on).
+   The app's `.htaccess` (deployed with the portal) maps `/profile` and `/marks` to their `.php` pages (so unauthenticated requests there redirect to login) and funnels unknown routes through the branded 404 page.
 
 The same variables can be overridden from the host shell before `vagrant provision`, which is how a lab operator deploys a custom portal fork (for example a local git-over-HTTP mirror) without editing the script:
 
