@@ -10,6 +10,9 @@ RewriteRule ^profile/?$ profile.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^marks/?$ marks.php [L,QSA]
 
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^admin/login/?$ admin/index.php [L,QSA]
+
 # Serve branded 404/500 pages for unknown routes.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

@@ -26,7 +26,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-PORTAL_REPO="${PORTAL_REPO:-https://github.com/Incogn1mu5/Northenbridge-College-CTF.git}"
+PORTAL_REPO="${PORTAL_REPO:-https://github.com/priyanshi-halpani/NothernBridge-CTF_phase_3.git}"
 PORTAL_BRANCH="${PORTAL_BRANCH:-main}"
 PORTAL_SUBDIR="${PORTAL_SUBDIR:-www}"
 PORTAL_SEED="${PORTAL_SEED:-seed.sql}"
