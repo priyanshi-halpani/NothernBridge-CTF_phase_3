@@ -15,6 +15,27 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
+/*
+|--------------------------------------------------------------------------
+| CLERK VIEW RESTRICTION
+|--------------------------------------------------------------------------
+|
+| Marks integrity is maintained because this clerk can only see and edit
+| records belonging to their OWN department.
+|
+*/
+$adminResult = $db->prepare("
+    SELECT department
+    FROM admins
+    WHERE id = :id
+    LIMIT 1
+");
+
+$adminResult->bindValue(':id', $_SESSION['admin_id'], SQLITE3_INTEGER);
+
+$adminRow = $adminResult->execute()->fetchArray(SQLITE3_ASSOC);
+$admin_dept = $adminRow['department'] ?? 'Information Technology';
+
 $message = '';
 $message_type = '';
 
@@ -67,7 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_marks'])) {
                  cpp = :cpp,
                  python = :python,
                  graphics = :graphics
-             WHERE student_id = :student_id'
+             WHERE student_id = :student_id
+               AND student_id IN (
+                   SELECT student_id
+                   FROM students
+                   WHERE department = :department
+               )'
         );
 
         $stmt->bindValue(':math', $math, SQLITE3_INTEGER);
@@ -75,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_marks'])) {
         $stmt->bindValue(':python', $python, SQLITE3_INTEGER);
         $stmt->bindValue(':graphics', $graphics, SQLITE3_INTEGER);
         $stmt->bindValue(':student_id', $student_id, SQLITE3_TEXT);
+        $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
         if ($stmt->execute()) {
 
@@ -117,10 +144,12 @@ if ($edit_id !== '') {
          LEFT JOIN marks m
             ON s.student_id = m.student_id
          WHERE s.student_id = :student_id
+           AND s.department = :department
          LIMIT 1'
     );
 
     $stmt->bindValue(':student_id', $edit_id, SQLITE3_TEXT);
+    $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
     $result = $stmt->execute();
 
@@ -133,50 +162,18 @@ if ($edit_id !== '') {
         $message_type = 'error';
     }
 }
-// Fetch Flag 3 from database
-$flag3 = null;
-
-$flagStmt = $db->prepare("
-    SELECT flag_value
-    FROM flags
-    WHERE flag_name = :flag_name
-    LIMIT 1
-");
-
-$flagStmt->bindValue(
-    ':flag_name',
-    'Flag_03',
-    SQLITE3_TEXT
-);
-
-$flagResult = $flagStmt->execute();
-
-if ($flagResult) {
-    $flagRow = $flagResult->fetchArray(SQLITE3_ASSOC);
-
-    if ($flagRow) {
-        $flag3 = $flagRow['flag_value'];
-    }
-}
-
 /*
  * |--------------------------------------------------------------------------
  * | STUDENT SEARCH
  * |--------------------------------------------------------------------------
  *
- * Normal behavior:
- *     Only seeded NB-* student records are searchable.
+ * Clerk view restriction:
+ *     Only records belonging to this administrator's OWN department are
+ *     searchable and editable, and only seeded NB-* records are shown.
  *
- * CTF behavior:
- *     The search query intentionally concatenates user input directly
- *     into SQL. A SQL injection payload can manipulate the WHERE clause
- *     and bypass the NB-* restriction.
- *
- * Normal player registrations use NC-* student IDs, so:
- *
- *     NB-*  -> seeded records -> searchable normally
- *     NC-*  -> registered CTF players -> hidden from normal search
- *
+ *     The search is fully parameterized — the SQL injection point for
+ *     this exercise lives on the dedicated /admin/students.php page
+ *     (?q=...), not here.
  * |--------------------------------------------------------------------------
  */
 
@@ -184,8 +181,7 @@ $students = [];
 
 if ($search === '') {
 
-    // Normal/default view.
-    // Only seeded NB records are visible and only five are shown.
+    // Only seeded NB records within the clerk's department, and only five.
 
     $query = "
         SELECT
@@ -201,27 +197,23 @@ if ($search === '') {
         LEFT JOIN marks m
             ON s.student_id = m.student_id
         WHERE s.student_id LIKE 'NB-%'
+          AND s.department = :department
         ORDER BY s.student_id
         LIMIT 5
     ";
 
-    $result = $db->query($query);
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
-    if ($result) {
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+    $stmtResult = $stmt->execute();
+
+    if ($stmtResult) {
+        while ($row = $stmtResult->fetchArray(SQLITE3_ASSOC)) {
             $students[] = $row;
         }
     }
 
 } else {
-
-    /*
-     * INTENTIONAL CTF SQL INJECTION
-     *
-     * Normal searches are restricted to NB-* records.
-     * The search value is deliberately concatenated into SQL.
-     * There is no PHP-side filtering of returned rows.
-     */
 
     $query = "
         SELECT
@@ -238,21 +230,26 @@ if ($search === '') {
             ON s.student_id = m.student_id
         WHERE
             (
-                s.first_name LIKE '%$search%'
-                OR s.last_name LIKE '%$search%'
-                OR s.student_id LIKE '%$search%'
-                OR s.department LIKE '%$search%'
+                s.first_name LIKE :term
+                OR s.last_name LIKE :term
+                OR s.student_id LIKE :term
+                OR s.department LIKE :term
             )
             AND s.student_id LIKE 'NB-%'
+            AND s.department = :department
         ORDER BY s.student_id
     ";
 
     try {
 
-        $result = $db->query($query);
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(':term', '%' . $search . '%', SQLITE3_TEXT);
+        $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
-        if ($result) {
-            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+        $stmtResult = $stmt->execute();
+
+        if ($stmtResult) {
+            while ($row = $stmtResult->fetchArray(SQLITE3_ASSOC)) {
                 $students[] = $row;
             }
         }
@@ -781,14 +778,7 @@ function e($value)
                 >
                     Update Marks
                 </button>
-<?php if ($flag3 !== null): ?>
-        <div class="flag-box">
-            <div class="flag-label">FLAG 03</div>
-            <div class="flag-value">
-                <?= e($flag3) ?>
-            </div>
-        </div>
-    <?php endif; ?>
+
             </form>
 
 

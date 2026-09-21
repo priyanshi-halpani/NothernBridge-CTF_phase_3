@@ -66,8 +66,8 @@ $env:PORTAL_REPO = "http://10.0.2.2:9418/mirror"
 vagrant provision
 ```
 5. Places the decoy credential file (`PORTAL_DIR/.env`) used by the password-spray stage.
-6. Places the final flag on the filesystem at `/opt/northbridge/flag-final.txt` (outside the database).
-7. **Idempotently** initializes the SQLite database from `PORTAL_SEED`. Seeding is skipped completely when the database already contains tables, so player data is never overwritten by a reprovision.
+6. Places the final flag on the filesystem at `/opt/northbridge/flag.txt` (outside the database); the legacy `flag-final.txt` path is removed.
+7. **Idempotently** initializes the SQLite database from `PORTAL_SEED`. The seed is re-applied on every provision using `CREATE IF NOT EXISTS` / `INSERT OR IGNORE` (plus a small migration block), so existing player rows are never overwritten.
 8. Sets permissions (`www-data`), restarts Apache and verifies the site answers HTTP 200 on `127.0.0.1:80`.
 
 ### Idempotency
@@ -76,8 +76,9 @@ vagrant provision
 
 * The git checkout is updated in place (`fetch` + `checkout -B`).
 * The web files are re-synced with `rsync` (database directory excluded).
-* The decoy `.env` and flag file are only written if missing.
-* The database is only seeded once — subsequent runs leave existing rows untouched.
+* The decoy `.env` is always rewritten from the script (it is fictional data, not player data).
+* The flag file is only written if missing, so a lab keeps its unique flag across reprovisions.
+* The database seed is re-applied with `INSERT OR IGNORE` semantics, so existing rows are untouched.
 
 ### Addresses
 
@@ -127,7 +128,7 @@ Deployed by the provisioning script, never committed to the repository:
 |---|---|---|
 | SQLite database | `/var/www/html/database/college.db` | application data, built from `seed.sql` |
 | Decoy credential file | `/var/www/html/.env` | candidate admin passwords for the spray stage |
-| Final flag | `/opt/northbridge/flag-final.txt` | filesystem flag — **not** in the database |
+| Final flag | `/opt/northbridge/flag.txt` | filesystem flag — **not** in the database |
 
 ## Resetting the Lab
 

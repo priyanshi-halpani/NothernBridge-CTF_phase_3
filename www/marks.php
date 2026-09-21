@@ -97,37 +97,6 @@ $failedSubject = (
 
 $status = $failedSubject ? "FAILED" : "PASSED";
 $statusClass = $failedSubject ? "failed" : "passed";
-/*
-|--------------------------------------------------------------------------
-| Fetch Flag 04 only after student passes
-|--------------------------------------------------------------------------
-*/
-$flag4 = null;
-
-if (!$failedSubject) {
-    $flagStmt = $db->prepare("
-        SELECT flag_value
-        FROM flags
-        WHERE flag_name = :flag_name
-        LIMIT 1
-    ");
-
-    $flagStmt->bindValue(
-        ':flag_name',
-        'Flag_04',
-        SQLITE3_TEXT
-    );
-
-    $flagResult = $flagStmt->execute();
-
-    if ($flagResult) {
-        $flagRow = $flagResult->fetchArray(SQLITE3_ASSOC);
-
-        if ($flagRow) {
-            $flag4 = $flagRow['flag_value'];
-        }
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -471,14 +440,6 @@ if (!$failedSubject) {
             <div class="status <?= $statusClass ?>">
                 <?= $status ?>
             </div>
-            <?php if ($flag4 !== null): ?>
-    <div class="flag-box">
-        <div class="flag-label">CTF FLAG 4</div>
-        <div class="flag-value">
-            <?= htmlspecialchars($flag4) ?>
-        </div>
-    </div>
-<?php endif; ?>
 
         </div>
 

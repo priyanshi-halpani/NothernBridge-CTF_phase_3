@@ -138,7 +138,7 @@ Project root (clone anywhere)
        3. rsync     $PORTAL_SUBDIR (www)        →  /var/www/html   (database/ excluded)
        4. configure Apache vhost  http://northenbridge.local/  (DocumentRoot /var/www/html)
        5. write decoy  /var/www/html/.env        (password-spray stage)
-       6. write flag   /opt/northbridge/flag-final.txt  (filesystem, not in DB)
+       6. write flag   /opt/northbridge/flag.txt  (filesystem, not in DB)
        7. seed DB from seed.sql (skipped if tables already exist)
        8. restart Apache; verify HTTP 200 on 127.0.0.1:80
 ```
@@ -328,7 +328,7 @@ The provisioning process:
 
 The seed file provides the fictional students, marks, administrator account, and the in-application CTF flags.
 
-The **final** flag is deliberately placed outside the database by the provisioning script, at `/opt/northbridge/flag-final.txt`.  
+The **final** flag is deliberately placed outside the database by the provisioning script, at `/opt/northbridge/flag.txt`.  
 </br>  
 
 ## 11. Application Data Flow

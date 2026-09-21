@@ -12,8 +12,8 @@ if ( !isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tr
     exit;
 }
 
-// Fetch Flag 2 from database
-$flag2 = null;
+// Fetch Flag 3 from database
+$flag3 = null;
 
 $flagStmt = $db->prepare("
     SELECT flag_value
@@ -24,7 +24,7 @@ $flagStmt = $db->prepare("
 
 $flagStmt->bindValue(
     ':flag_name',
-    'Flag_02',
+    'Flag_03',
     SQLITE3_TEXT
 );
 
@@ -34,7 +34,7 @@ if ($flagResult) {
     $flagRow = $flagResult->fetchArray(SQLITE3_ASSOC);
 
     if ($flagRow) {
-        $flag2 = $flagRow['flag_value'];
+        $flag3 = $flagRow['flag_value'];
     }
 }
 
@@ -51,7 +51,8 @@ $stmt = $db->prepare("
         username,
         name,
         number,
-        salary
+        salary,
+        department
     FROM admins
     WHERE id = :id
     LIMIT 1
@@ -71,26 +72,32 @@ if (!$admin) {
 
 /*
 |--------------------------------------------------------------------------
-| Fetch only a limited number of students
+| Fetch only a limited number of students from the clerk's department
 |--------------------------------------------------------------------------
 |
-| Normal dashboard view intentionally shows only 5 records.
+| Clerk view is restricted: only records for the administrator's own
+| department are shown, and the dashboard exposes only 5 records.
 |
 */
-$result = $db->query("
+$studentStmt = $db->prepare("
     SELECT
         student_id,
         first_name,
         last_name,
         department
     FROM students
+    WHERE department = :department
     ORDER BY student_id
     LIMIT 5
 ");
 
+$studentStmt->bindValue(':department', $admin['department'], SQLITE3_TEXT);
+
+$studentResult = $studentStmt->execute();
+
 $students = [];
 
-while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+while ($row = $studentResult->fetchArray(SQLITE3_ASSOC)) {
     $students[] = $row;
 }
 
@@ -270,6 +277,12 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
             opacity: .9;
         }
 
+        .panel-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         .table-wrapper {
             overflow-x: auto;
         }
@@ -434,6 +447,18 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 
         </div>
 
+        <div class="admin-card">
+
+            <div class="label">
+                Department
+            </div>
+
+            <div class="value">
+                <?= htmlspecialchars($admin['department']) ?>
+            </div>
+
+        </div>
+
     </section>
 
 
@@ -450,17 +475,28 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
                 </h2>
 
                 <p>
-                    A limited overview of enrolled students.
+                    A limited overview of your department's enrolled students.
                 </p>
 
             </div>
 
-            <a
-                href="edit-marks.php"
-                class="manage-button"
-            >
-                Edit Student Marks
-            </a>
+            <div class="panel-actions">
+
+                <a
+                    href="students.php"
+                    class="manage-button"
+                >
+                    Student Records
+                </a>
+
+                <a
+                    href="edit-marks.php"
+                    class="manage-button"
+                >
+                    Edit Student Marks
+                </a>
+
+            </div>
 
         </div>
 
@@ -524,17 +560,17 @@ while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 
 
         <div class="limited-note">
-            Only a limited number of student records are displayed
-            on the dashboard. Use the marks management page to
-            manage academic records.
+            Clerk view is deliberately restricted: only records from your
+            own department are listed here, and only a limited number are
+            displayed. Complete records require registrar approval.
         </div>
                     
     </section>
-    <?php if ($flag2 !== null): ?>
+    <?php if ($flag3 !== null): ?>
         <div class="flag-box">
-            <div class="flag-label">FLAG 02</div>
+            <div class="flag-label">FLAG 03</div>
             <div class="flag-value">
-                <?= htmlspecialchars($flag2) ?>
+                <?= htmlspecialchars($flag3) ?>
             </div>
         </div>
     <?php endif; ?>
