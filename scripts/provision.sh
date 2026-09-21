@@ -116,8 +116,11 @@ cat > /etc/apache2/sites-available/northbridge.conf <<VHOST
     ErrorDocument 500 /500.html
 
     # The decoy .env is intentionally retrievable as a plain-text file.
-    # Serve it with the correct MIME type (text/plain, never PHP/HTML).
-    AddType text/plain .env
+    # mod_mime treats a fully-hidden filename like ".env" as extensionless,
+    # so AddType never matches it; ForceType guarantees text/plain.
+    <FilesMatch "^\.env$">
+        ForceType text/plain
+    </FilesMatch>
 
     <Directory $PORTAL_DIR>
         Options -Indexes

@@ -30,8 +30,10 @@ in Git or in any database table.
 - Every other pair fails with the same generic **"Invalid administrator
   username or password."** message — there is deliberately no user
   enumeration.
-- The file is served as `text/plain` via `AddType text/plain .env` in the
-  virtual host, returns HTTP 200, and is not blocked.
+- The file is served as `text/plain` (a `<FilesMatch "^\.env$">` block with
+  `ForceType text/plain` — required because Apache treats the hidden
+  filename `.env` as extensionless, so `AddType` would never match it),
+  returns HTTP 200, and is not blocked.
 - `LAB ONLY — no throttling`: there is intentionally no lockout,
   rate-limit or CAPTCHA. Spray attempts are recorded in the Apache
   `access.log` (`northbridge_access.log`) — each multi-field POST is one log line.
