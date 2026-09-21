@@ -81,11 +81,14 @@ if ($flagResult) {
 |     The $q value is deliberately concatenated directly into the SQL
 |     WHERE clause (this is the documented injection field for the
 |     database-exfiltration stage — see Docs/ctf-design.md). The
-|     department constraint is still bound separately, so a payload that
+|     department constraint is embedded as a safe literal (source: the
+|     signed-in admin row, escaped before use), so a payload that
 |     escapes the LIKE expression also escapes the clerk-view limit.
 |
-| There is a hard query limit and the page reports "no records" instead
-| of leaking SQL errors.
+| The WHERE clause keeps the whole tail on a single line on purpose:
+| a `--` payload therefore comments out the department constraint, the
+| ORDER BY and the LIMIT. There is a hard query limit and the page
+| reports "no records" instead of leaking SQL errors.
 |--------------------------------------------------------------------------
 */
 
@@ -94,6 +97,8 @@ $q = trim((string)($_GET['q'] ?? ''));
 $students = [];
 $message = '';
 $message_type = '';
+
+$deptSafe = $db->escapeString($admin_dept);
 
 $query = "
     SELECT
@@ -111,23 +116,12 @@ $query = "
     LEFT JOIN marks m
         ON s.student_id = m.student_id
     WHERE
-        (
-            s.first_name LIKE '%$q%'
-            OR s.last_name LIKE '%$q%'
-            OR s.student_id LIKE '%$q%'
-            OR s.department LIKE '%$q%'
-        )
-        AND s.department = :department
-    ORDER BY s.student_id
-    LIMIT 25
+        ( s.first_name LIKE '%$q%' OR s.last_name LIKE '%$q%' OR s.student_id LIKE '%$q%' OR s.department LIKE '%$q%' ) AND s.department = '$deptSafe' ORDER BY s.student_id LIMIT 25
 ";
 
 try {
 
-    $stmt = $db->prepare($query);
-    $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
-
-    $stmtResult = $stmt->execute();
+    $stmtResult = $db->query($query);
 
     if ($stmtResult) {
         while ($row = $stmtResult->fetchArray(SQLITE3_ASSOC)) {

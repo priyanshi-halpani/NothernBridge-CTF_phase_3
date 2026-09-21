@@ -275,6 +275,9 @@ DELETE FROM flags WHERE flag_name = 'Flag_04';
 UPDATE flags SET Description = 'Flag revealed inside the intentionally limited student-record view'
  WHERE flag_name = 'Flag_02';
 
+UPDATE flags SET flag_value = 'Flag{Respected_the_Restricted_View}'
+ WHERE flag_name = 'Flag_02';
+
 INSERT OR IGNORE INTO compliance_notes
     (id, note, note_date)
 VALUES
