@@ -116,6 +116,11 @@ function nc_nav_class(string $target, string $current): string
 
     <nav class="nc-nav" aria-label="Primary">
         <a class="<?= nc_nav_class('index.php', $nc_current) ?>" href="index.php">Home</a>
+        <a class="<?= nc_nav_class('academics.php', $nc_current) ?>" href="academics.php">Academics</a>
+        <a class="<?= nc_nav_class('admissions.php', $nc_current) ?>" href="admissions.php">Admissions</a>
+        <a class="<?= nc_nav_class('events.php', $nc_current) ?>" href="events.php">Events</a>
+        <a class="<?= nc_nav_class('about.php', $nc_current) ?>" href="about.php">About</a>
+        <a class="<?= nc_nav_class('contact.php', $nc_current) ?>" href="contact.php">Contact</a>
 
         <?php if ($nc_student): ?>
             <a class="<?= nc_nav_class('profile.php', $nc_current) ?>" href="profile.php">Profile</a>

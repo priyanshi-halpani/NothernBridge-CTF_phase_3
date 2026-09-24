@@ -277,6 +277,48 @@ $year = date("Y");
         color: #3c4841;
     }
 
+    /* ---------- Quick links ---------- */
+    .quicklinks {
+        background: var(--hedge-dark);
+        border-bottom: 1px solid #2c4437;
+    }
+
+    .quicklinks-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0.9rem 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.9rem;
+    }
+
+    .quicklinks-inner a {
+        text-decoration: none;
+        color: var(--parchment);
+        border: 1px solid #3a5145;
+        border-radius: 3px;
+        padding: 0.8rem 1rem;
+        transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .quicklinks-inner a:hover {
+        border-color: var(--brass);
+        background: rgba(169, 124, 51, 0.1);
+    }
+
+    .quicklinks-inner h3 {
+        font-size: 0.98rem;
+        margin: 0 0 0.2rem;
+        color: var(--brass);
+    }
+
+    .quicklinks-inner p {
+        margin: 0;
+        font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+        font-size: 0.8rem;
+        color: #b9c4bb;
+    }
+
     /* ---------- Events ---------- */
     .events-section {
         max-width: 1100px;
@@ -364,6 +406,7 @@ $year = date("Y");
     @media (max-width: 860px) {
         .hero-inner { grid-template-columns: 1fr; }
         .event-grid { grid-template-columns: repeat(2, 1fr); }
+        .quicklinks-inner { grid-template-columns: repeat(3, 1fr); }
     }
 
     @media (max-width: 720px) {
@@ -376,6 +419,7 @@ $year = date("Y");
         .hero h1 { font-size: 2rem; }
         .announcement-inner { flex-direction: column; align-items: flex-start; }
         .announcement-tag { border-right: none; padding-right: 0; }
+        .quicklinks-inner { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -419,10 +463,20 @@ $year = date("Y");
     </div>
 </div>
 
+<section class="quicklinks" id="quicklinks">
+    <div class="quicklinks-inner">
+        <a href="academics.php"><h3>Academics</h3><p>Explore programs and schools.</p></a>
+        <a href="admissions.php"><h3>Admissions</h3><p>Apply for the fall term.</p></a>
+        <a href="events.php"><h3>Events</h3><p>See the full campus calendar.</p></a>
+        <a href="about.php"><h3>About</h3><p>Our story, values, and stats.</p></a>
+        <a href="contact.php"><h3>Contact</h3><p>Directory and inquiry form.</p></a>
+    </div>
+</section>
+
 <section class="events-section" id="events">
     <div class="section-head">
         <h2>Upcoming on Campus</h2>
-        <a href="#events">View full calendar</a>
+        <a href="events.php">View full calendar</a>
     </div>
 
     <div class="event-grid">
