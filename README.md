@@ -136,7 +136,7 @@ northenbridge-ctf/
 
 ## Deployment
 
-The lab is **provisioning-only**: it builds itself inside a fresh Vagrant-managed Ubuntu VM with no shared folders, no manual copy steps and no runtime dependency on the host filesystem. One script, `scripts/provision.sh`, does everything.
+The lab is **provisioning-only**: it builds itself inside a fresh Vagrant-managed Ubuntu VM with no shared folders, no manual copy steps and no runtime dependency on the host filesystem. One script, `infra/provision.sh`, does everything.
 
 ### Requirements
 
@@ -158,7 +158,7 @@ vagrant up
 
 The provisioning script installs Apache, PHP, SQLite and the required PHP SQLite extension, configures the virtual host, clones the portal application from GitHub into `/var/www/html`, initializes the database from `seed.sql` (idempotently) and places the challenge artifacts (decoy `.env` credential file and the filesystem final flag).
 
-The source of truth for the deployment is `scripts/provision.sh`. The variables at the top of the script control where the portal is cloned from and where it is installed:
+The source of truth for the deployment is `infra/provision.sh`. The variables at the top of the script control where the portal is cloned from and where it is installed:
 
 ```bash
 PORTAL_REPO="https://github.com/<org>/northbridge-portal.git"  # GitHub URL of the portal
@@ -231,7 +231,7 @@ vagrant up
 
 The provisioning process recreates the application environment, seeds the SQLite database and places the challenge artifacts.
 
-`scripts/provision.sh` is idempotent: running `vagrant provision` again will **not** wipe an existing database — seeding is skipped whenever the database already contains tables, so a reprovision mid-session does not reset player progress.
+`infra/provision.sh` is idempotent: running `vagrant provision` again will **not** wipe an existing database — seeding is skipped whenever the database already contains tables, so a reprovision mid-session does not reset player progress.
 
 **Do not destroy and recreate the VM while a CTF session is in progress**, because `vagrant destroy -f` removes the VM and therefore the challenge data.
 

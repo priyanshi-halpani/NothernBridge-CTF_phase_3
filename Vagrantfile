@@ -6,7 +6,7 @@ Vagrant.configure("2") do |config|
 
   # Phase 3 — Provisioning-Only Build.
   # No shared folders: the whole CTF is built inside the VM by
-  # scripts/provision.sh (portal source is cloned from GitHub into
+  # infra/provision.sh (portal source is cloned from GitHub into
   # /var/www/html). Nothing is read from /vagrant at runtime.
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.synced_folder "./www", "/var/www/northenbridge", disabled: true
@@ -30,7 +30,7 @@ Vagrant.configure("2") do |config|
   #   $env:PORTAL_REPO = "http://10.0.2.2:9418/repo"
   #   vagrant provision
   config.vm.provision "shell",
-                      path: "scripts/provision.sh",
+                      path: "infra/provision.sh",
                       env: {
                         "PORTAL_REPO"   => ENV["PORTAL_REPO"]   || "",
                         "PORTAL_BRANCH" => ENV["PORTAL_BRANCH"] || ""

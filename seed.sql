@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS faculty (
 
 -- Internal compliance / audit notes. The final flag is deliberately NOT
 -- stored in any database table; the note below only points to its
--- filesystem location (see scripts/provision.sh).
+-- filesystem location (see infra/provision.sh).
 CREATE TABLE IF NOT EXISTS compliance_notes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     note TEXT NOT NULL,
@@ -317,7 +317,7 @@ VALUES
 -- =========================================
 -- CTF FLAGS (in-application progression)
 -- The final flag does NOT live here — it is placed on the
--- filesystem by scripts/provision.sh.
+-- filesystem by infra/provision.sh.
 -- =========================================
 
 INSERT OR IGNORE INTO flags

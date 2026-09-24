@@ -1,7 +1,7 @@
 # Vagrant
 .vagrant/
 
-# Generated SQLite databases (built by scripts/provision.sh)
+# Generated SQLite databases (built by infra/provision.sh)
 *.db
 *.sqlite
 *.sqlite3

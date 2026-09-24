@@ -14,14 +14,14 @@
 | 4. Exploring limited records | `/admin/dashboard.php` dept-scoped record list | `Flag_03` — `Flag{Explored_Limited_Records}` | `flags` table, shown on the dashboard |
 | 5. Database exfiltration (final) | SQL injection on `/admin/students.php?q=...` → dump all tables → read the compliance note | Final flag `NCC{...}` | filesystem `/opt/northbridge/flag.txt`, **not** in the database |
 
-The final (stage 5) flag is created by `scripts/provision.sh` with a
+The final (stage 5) flag is created by `infra/provision.sh` with a
 random token so every deployment gets a unique value. It is stored as
 `root:www-data` with mode `0640`, and the literal value never appears
 in Git or in any database table.
 
 ## Req 4 — Decoy credential file & password spraying
 
-- `scripts/provision.sh` writes `.env` to `/var/www/html/.env` on every
+- `infra/provision.sh` writes `.env` to `/var/www/html/.env` on every
   provision. The file is clearly labelled "LAB ONLY — FICTIONAL
   CREDENTIALS".
 - Exactly 12 pairs are present. Exactly one (`helen.carter:Winter2026!`)

@@ -6,7 +6,7 @@ The lab is **provisioning-only**:
 
 * No Vagrant **synced folders** (`/vagrant`, `./www` are disabled in the `Vagrantfile`).
 * No manual copy steps and no runtime dependency on the host filesystem.
-* One script, `scripts/provision.sh`, builds the entire CTF: it installs packages, clones the portal application from GitHub into `/var/www/html`, configures Apache, seeds the SQLite database, and places the challenge artifacts (decoy `.env` file and the filesystem final flag).
+* One script, `infra/provision.sh`, builds the entire CTF: it installs packages, clones the portal application from GitHub into `/var/www/html`, configures Apache, seeds the SQLite database, and places the challenge artifacts (decoy `.env` file and the filesystem final flag).
 
 ## Requirements
 
@@ -37,9 +37,9 @@ vagrant destroy -f
 vagrant up
 ```
 
-The portal application is never read from the host at runtime — it is cloned into `/var/www/html` inside the VM by `scripts/provision.sh`.
+The portal application is never read from the host at runtime — it is cloned into `/var/www/html` inside the VM by `infra/provision.sh`.
 
-## Provisioning (`scripts/provision.sh`)
+## Provisioning (`infra/provision.sh`)
 
 The script is fully declarative. The configuration variables live at the top of the file:
 

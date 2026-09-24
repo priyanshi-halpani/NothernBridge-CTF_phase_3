@@ -129,7 +129,7 @@ Project root (clone anywhere)
     │
     ├── Vagrantfile
     ├── seed.sql
-    └── scripts/provision.sh        ← the single source of truth
+    └── infra/provision.sh        ← the single source of truth
           │
           │  vagrant provision (runs inside the VM)
           ▼
@@ -315,7 +315,7 @@ The actual flag values should be treated as implementation/solution data rather 
 
 ## 10. Database Initialization
 
-The database is initialized from `seed.sql` by `scripts/provision.sh`.
+The database is initialized from `seed.sql` by `infra/provision.sh`.
 
 The provisioning process:
 
