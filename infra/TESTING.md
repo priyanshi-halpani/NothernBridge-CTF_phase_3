@@ -270,12 +270,14 @@ records** by default, while the intentional SQLi paths still unlock everything.
 |---|---|
 | Command | `git grep -n 'NCC{'` ; `git log --all --oneline -G 'NCC\{[0-9a-f]{12,}\}'` ; `git ls-files \| grep -E '\.env$|\.db$|database/|flag.txt'` |
 | Expected | No real tokens, credentials, or personal data anywhere in committed content or history; only `NCC{...}` placeholders/`NCC{$TOKEN}` template |
-| Actual | `git grep` clean apart from sanctioned placeholders/templates and the redacted TESTING.md references. **Finding:** commit `a6f839d` originally embedded two real deployment tokens (now redacted at the tip); `git log --all -G 'NCC\{[0-9a-f]{12,}\}'` isolates that single commit as the only one ever carrying a real token. No real creds/personal data anywhere. |
-| Result | ⚠ Finding identified — remediation = rewrite `a6f839d` + rebase descendants, then force-update local+remote refs (**requires approval, mentioned in the note below**) |
+| Actual | `git grep` clean apart from sanctioned placeholders/templates and the redacted TESTING.md references. The only commit that ever embedded a real token (`a6f839d`) was **rewritten** (`4e26140`, byte-faithful redaction of the two tokens) and all descendants (`e6537d7`, `0e78539`, `219a089`) rebuilt above it; `git log -G 'NCC\{[0-9a-f]{12,}\}'` over the reachable history of `main` and `feature/production-hardening` returns nothing. No real creds/personal data anywhere. |
+| Result | ✔ PASS (history rewrite + force-update of local and remote refs completed) |
 
 > **History-rewrite note (criterion 13 + 10):** commit `a6f839d` ("Add section
-> 11/12 test evidence") is the only commit that ever embedded a real deployment
-> token. Prescribed remediation: rewrite it with `NCC{<redacted>}` in the
-> evidence row, rebase all descendant commits (`e2dcf17`, `1ae11fd`, and any
-> follow-ups) on top, then force-update local `main` + `feature/production-hardening`
-> and force-push to GitHub so no real token remains in history anywhere.
+> 11/12 test evidence") was the only commit that ever embedded real deployment
+> tokens. It was rewritten with `NCC{<redacted>}` in the evidence row (its tree
+> differs from the original by exactly that one line), and every descendant
+> commit was rebuilt above it with the same tree/content. Old refs on GitHub
+> were force-updated, so no real token exists in any reachable commit locally
+> or on GitHub; `git filter-branch` and garbage-collection remove the stale
+> objects from local object storage.
