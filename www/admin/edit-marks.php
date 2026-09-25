@@ -77,9 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_marks'])) {
     } else {
 
         /*
-         * The update itself is intentionally available through the
-         * Edit Marks interface. The CTF restriction is on DISCOVERY:
-         * only the first five records are normally exposed.
+         * The update is intentionally available for whatever record the
+         * examiner opened. Discovery is what is restricted: the default
+         * list only exposes five own-department records, and the search
+         * box is the intentionally injectable path that unlocks the rest.
          */
 
         $stmt = $db->prepare(
@@ -88,12 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_marks'])) {
                  cpp = :cpp,
                  python = :python,
                  graphics = :graphics
-             WHERE student_id = :student_id
-               AND student_id IN (
-                   SELECT student_id
-                   FROM students
-                   WHERE department = :department
-               )'
+             WHERE student_id = :student_id'
         );
 
         $stmt->bindValue(':math', $math, SQLITE3_INTEGER);
@@ -101,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_marks'])) {
         $stmt->bindValue(':python', $python, SQLITE3_INTEGER);
         $stmt->bindValue(':graphics', $graphics, SQLITE3_INTEGER);
         $stmt->bindValue(':student_id', $student_id, SQLITE3_TEXT);
-        $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
         if ($stmt->execute()) {
 
@@ -144,12 +139,10 @@ if ($edit_id !== '') {
          LEFT JOIN marks m
             ON s.student_id = m.student_id
          WHERE s.student_id = :student_id
-           AND s.department = :department
          LIMIT 1'
     );
 
     $stmt->bindValue(':student_id', $edit_id, SQLITE3_TEXT);
-    $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
     $result = $stmt->execute();
 
@@ -167,13 +160,15 @@ if ($edit_id !== '') {
  * | STUDENT SEARCH
  * |--------------------------------------------------------------------------
  *
- * Clerk view restriction:
- *     Only records belonging to this administrator's OWN department are
- *     searchable and editable, and only seeded NB-* records are shown.
+ * Default (no search) view restriction:
+ *     Only the first five seeded NB-* records of the administrator's OWN
+ *     department are shown — freshly registered players (NC-*) stay hidden.
  *
- *     The search is fully parameterized — the SQL injection point for
- *     this exercise lives on the dedicated /admin/students.php page
- *     (?q=...), not here.
+ * The search box is the SECOND intentional SQL injection point of the
+ * exercise. It concatenates the raw term into the WHERE clause, so a
+ * payload such as  %') OR 1=1 --   breaks out of the LIKE and the
+ * department guard and lists every record (including NC-* registrations),
+ * which can then be opened and edited.
  * |--------------------------------------------------------------------------
  */
 
@@ -215,6 +210,16 @@ if ($search === '') {
 
 } else {
 
+    /*
+     * Intentionally concatenated (injectable) term — see the STUDENT
+     * SEARCH comment above. The whole clause tail sits on ONE line (same
+     * pattern as students.php) so a payload such as  %') OR 1=1 --  blanks
+     * the NB-* and department guards with a line comment and lists every
+     * record, including freshly registered NC-* players.
+     */
+
+    $dept_literal = $db->escapeString($admin_dept);
+
     $query = "
         SELECT
             s.student_id,
@@ -229,22 +234,12 @@ if ($search === '') {
         LEFT JOIN marks m
             ON s.student_id = m.student_id
         WHERE
-            (
-                s.first_name LIKE :term
-                OR s.last_name LIKE :term
-                OR s.student_id LIKE :term
-                OR s.department LIKE :term
-            )
-            AND s.student_id LIKE 'NB-%'
-            AND s.department = :department
-        ORDER BY s.student_id
+            ( s.first_name LIKE '%$search%' OR s.last_name LIKE '%$search%' OR s.student_id LIKE '%$search%' OR s.department LIKE '%$search%' ) AND s.student_id LIKE 'NB-%' AND s.department = '$dept_literal' ORDER BY s.student_id
     ";
 
     try {
 
         $stmt = $db->prepare($query);
-        $stmt->bindValue(':term', '%' . $search . '%', SQLITE3_TEXT);
-        $stmt->bindValue(':department', $admin_dept, SQLITE3_TEXT);
 
         $stmtResult = $stmt->execute();
 

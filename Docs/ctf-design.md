@@ -47,10 +47,13 @@ in Git or in any database table.
 
 - `admins` has a `department` column. The seeded admin
   `helen.carter` / `Winter2026!` belongs to **Information Technology**.
-- The limited view (`www/admin/students.php`), the dashboard list and the
-  marks editor are all scoped to the signed-in admin's department, so a
-  clerk can only see/touch their own department's records (marks
-  integrity).
+- The limited view (`www/admin/students.php`) and the dashboard list are
+  scoped to the signed-in admin's department, so a clerk can only see
+  their own department's records at a glance (marks integrity by default).
+- `edit-marks.php` shows only five own-department `NB-*` records by
+  default, but its search box is a **second** intentional SQL injection
+  point (see below) that lists every record and enables editing any of
+  them — including cross-department and freshly registered `NC-*` players.
 - The limited view exposes only: student ID, name, department and
   enrolled-course count (derived from the `marks` table). It displays:  
   *"Complete records require registrar approval — clerk view is
@@ -98,6 +101,29 @@ $query = "
   Unioned rows land in those fixed output columns.
 - Failure path is safe: `try/catch` + "No records match the search
   criteria." — SQL errors are never printed.
+
+### The intentional SQL injection (`edit-marks.php?search=...`)
+
+Second injection point, on the marks editor.
+
+- Default view (no `search`): only five own-department `NB-*` records —
+  freshly registered players (`NC-*`) are hidden until unlocked.
+- File: `www/admin/edit-marks.php`. The raw `search` term is concatenated
+  into the WHERE clause (`%$search%`) exactly like `students.php`, with
+  the department value embedded as an `escapeString()`ed literal and the
+  whole tail on a single line (so `--` blanks it).
+- The edit path (`?id=` fetch and the `UPDATE marks`) no longer enforces a
+  department guard: once the examiner unlocks the list, any listed record
+  can be opened and edited, and the change persists.
+- Working payload (type into the search box, or `?search=`):
+  ```text
+  search=%') OR 1=1 --
+  ```
+  Lists every student of every department (`NB-*` and `NC-*`) with
+  per-row "Edit Marks" links.
+- Purpose: a write/showcase stage. The read-only union shaping of this
+  page differs from `students.php` (marks columns are already joined), so
+  its role is unlocking records rather than dumping the schema.
 
 ### Tables a complete dump must reveal
 
