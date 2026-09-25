@@ -75,8 +75,9 @@ if (!$admin) {
 | Fetch only a limited number of students from the clerk's department
 |--------------------------------------------------------------------------
 |
-| Clerk view is restricted: only records for the administrator's own
-| department are shown, and the dashboard exposes only 5 records.
+| Clerk view is restricted: only the admin's own department is shown,
+| seeded NB-* records only (fresh NC-* registrations stay hidden), and
+| the dashboard exposes only 5 records.
 |
 */
 $studentStmt = $db->prepare("
@@ -87,6 +88,7 @@ $studentStmt = $db->prepare("
         department
     FROM students
     WHERE department = :department
+      AND student_id LIKE 'NB-%'
     ORDER BY student_id
     LIMIT 5
 ");

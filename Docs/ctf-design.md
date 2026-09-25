@@ -11,7 +11,7 @@
 | 1. Discover the hidden admin portal | `/admin/` is unlinked; brute-forceable | `Flag_01` — `Flag{Discovered_hidden_route}` | `flags` table, shown on the admin login page |
 | 2. Password spraying | The decoy `/var/www/html/.env` contains 12 fictional `username:password` pairs; **only one** (`helen.carter:Winter2026!`) is valid | (evidence = login + Apache access log) | — |
 | 3. Restricted clerk view | `/admin/students.php` limited view | `Flag_02` — `Flag{Respected_the_Restricted_View}` | `flags` table, shown on the restricted student-records page |
-| 4. Exploring limited records | `/admin/dashboard.php` dept-scoped record list | `Flag_03` — `Flag{Explored_Limited_Records}` | `flags` table, shown on the dashboard |
+| 4. Exploring limited records | `/admin/dashboard.php` dept-scoped record list (seeded `NB-*` records only — fresh `NC-*` registrations stay hidden) | `Flag_03` — `Flag{Explored_Limited_Records}` | `flags` table, shown on the dashboard |
 | 5. Database exfiltration (final) | SQL injection on `/admin/students.php?q=...` → dump all tables → read the compliance note | Final flag `NCC{...}` | filesystem `/opt/northbridge/flag.txt`, **not** in the database |
 
 The final (stage 5) flag is created by `infra/provision.sh` with a
