@@ -205,7 +205,7 @@ not install attack tools). The word list was `common.txt` (dirb, 4,751 entries).
 |---|---|
 | Command | `ls -la /opt/northbridge/flag.txt` ; `cat /opt/northbridge/flag.txt` |
 | Expected | `root:www-data`, mode 0640, `NCC{...}` unique per deployment, not in Git/DB |
-| Actual | `-rw-r----- 1 root www-data 321`. Body: "NoT in DB / Git" wording; token for this deployment **`NCC{<redacted>}`** (the previous deployment produced a different token, `NCC{<redacted>}` → per-deployment uniqueness confirmed) |
+| Actual | `-rw-r----- 1 root www-data 321`. Body: "NoT in DB / Git" wording; token for this deployment **`NCC{<redacted>}`** (the previous deployment produced a different token, **`NCC{<redacted>}`** → per-deployment uniqueness confirmed). *(Values deliberately redacted — this document must never carry real flag tokens.)* |
 | Result | ✔ PASS |
 
 ## Test 21 — Full reset
@@ -225,7 +225,7 @@ not install attack tools). The word list was `common.txt` (dirb, 4,751 entries).
 |---|---|
 | `Vagrantfile` — synced folders disabled, forwarded port 80→8080 (127.0.0.1), provision path `infra/provision.sh` | ✔ PASS |
 | Provision script at **`infra/provision.sh`** — single source of truth; idempotent; writes decoy `.env` + filesystem flag; no GitHub secrets | ✔ PASS (moved from `scripts/`, all 15 references updated, `bash -n`/runtime verified) |
-| Portal source deployable via `git clone` → `/var/www/html` | ✔ PASS locally (bare-mirror clone); GitHub push/clone itself blocked by missing credentials (**D1**) |
+| Portal source deployable via `git clone` → `/var/www/html` | ✔ PASS (bare-mirror clone during the run; **post-run update:** the GitHub repo is now public, so a true `git clone` + `vagrant up` is executable — see Supplement) |
 | Decoy `.env` — 12 fictional pairs, "LAB ONLY", text/plain | ✔ PASS |
 | Final flag — filesystem only, `0640 root:www-data`, unique per deployment | ✔ PASS |
 | Test evidence — this file | ✔ PASS |
@@ -235,3 +235,47 @@ not install attack tools). The word list was `common.txt` (dirb, 4,751 entries).
 ## Fuzz-exposure summary (what Test 11 legitimately finds)
 
 `/admin/login` portal (unlinked), `/.env` (decoy), `/database` + `/includes` (Apache 403), `/index.php`, `/profile`, `/robots.txt`. Nothing else responds at 2xx/3xx — custom dirs, source archives, and `.git` are absent.
+
+---
+
+## Supplement — changes landed after the 21-case matrix (2026-09-25)
+
+Post-matrix work is verified below. It extends the checklist: the clerk-visible
+surfaces (dashboard, edit-marks, students) now expose only **four seeded `NB-*`
+records** by default, while the intentional SQLi paths still unlock everything.
+
+### T22 — Edit-marks rework (second intentional injection point)
+
+| | |
+|---|---|
+| File | `www/admin/edit-marks.php` |
+| Command | login → `GET /admin/edit-marks.php` ; `GET /admin/edit-marks.php?search=%25')%20OR%201%3D1%20--%20` ; `GET /admin/edit-marks.php?id=NC-PP26-3884` ; `POST update_marks=1&student_id=NC-PP26-3884&math=99&cpp=88&python=77&graphics=66` (verified via `sqlite3 ... select`) |
+| Expected | Default = only own-department `NB-*` records (no `NC-*`); payload lists every record; id-based edit loads and **persists** for any listed student |
+| Actual | Default shows `NB-AN26-1005 NB-AP26-1001 NB-RA26-8681 NB-YS26-1006` (4, no `NC-*`); `%') OR 1=1 --` lists **12 records incl. `NC-PP26-3884`**; edit page loads for `NC-PP26-3884`; POST update persists in DB (`NC-PP26-3884` → 99/88/77/66; cross-dept `NB-RP26-1002` → 95/55/45/35) |
+| Result | ✔ PASS |
+
+### T23 — Clerk surfaces hide NC-* registrations by default
+
+| | |
+|---|---|
+| Files | `www/admin/dashboard.php`, `www/admin/students.php` |
+| Command | login → `GET /admin/dashboard.php` ; `GET /admin/students.php` ; then `q=') OR 1=1 --` and `q=') UNION SELECT type,name,tbl_name,1,2 FROM sqlite_master --` on `students.php` |
+| Expected | Both pages show only the 4 seeded `NB-*` IT records (zero `NC-*`); exfiltration vector unchanged |
+| Actual | Dashboard + students.php → exactly `NB-AN26-1005 NB-AP26-1001 NB-RA26-8681 NB-YS26-1006`, `NC-PP26-3884` absent; injected `q` still lists all 12 and the `sqlite_master` UNION still returns every table (`admins compliance_notes courses faculty flags marks sqlite_sequence sqlite_autoindex students`) |
+| Result | ✔ PASS |
+
+### T24 — Secret hygiene in Git/docs (checklist criterion 13)
+
+| | |
+|---|---|
+| Command | `git grep -n 'NCC{'` ; `git log --all --oneline -G 'NCC\{[0-9a-f]{12,}\}'` ; `git ls-files \| grep -E '\.env$|\.db$|database/|flag.txt'` |
+| Expected | No real tokens, credentials, or personal data anywhere in committed content or history; only `NCC{...}` placeholders/`NCC{$TOKEN}` template |
+| Actual | `git grep` clean apart from sanctioned placeholders/templates and the redacted TESTING.md references. **Finding:** commit `a6f839d` originally embedded two real deployment tokens (now redacted at the tip); `git log --all -G 'NCC\{[0-9a-f]{12,}\}'` isolates that single commit as the only one ever carrying a real token. No real creds/personal data anywhere. |
+| Result | ⚠ Finding identified — remediation = rewrite `a6f839d` + rebase descendants, then force-update local+remote refs (**requires approval, mentioned in the note below**) |
+
+> **History-rewrite note (criterion 13 + 10):** commit `a6f839d` ("Add section
+> 11/12 test evidence") is the only commit that ever embedded a real deployment
+> token. Prescribed remediation: rewrite it with `NCC{<redacted>}` in the
+> evidence row, rebase all descendant commits (`e2dcf17`, `1ae11fd`, and any
+> follow-ups) on top, then force-update local `main` + `feature/production-hardening`
+> and force-push to GitHub so no real token remains in history anywhere.

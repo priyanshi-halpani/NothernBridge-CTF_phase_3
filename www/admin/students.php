@@ -116,7 +116,7 @@ $query = "
     LEFT JOIN marks m
         ON s.student_id = m.student_id
     WHERE
-        ( s.first_name LIKE '%$q%' OR s.last_name LIKE '%$q%' OR s.student_id LIKE '%$q%' OR s.department LIKE '%$q%' ) AND s.department = '$deptSafe' ORDER BY s.student_id LIMIT 25
+        ( s.first_name LIKE '%$q%' OR s.last_name LIKE '%$q%' OR s.student_id LIKE '%$q%' OR s.department LIKE '%$q%' ) AND s.department = '$deptSafe' AND s.student_id LIKE 'NB-%' ORDER BY s.student_id LIMIT 25
 ";
 
 try {

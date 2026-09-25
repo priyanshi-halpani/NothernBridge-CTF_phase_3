@@ -77,14 +77,17 @@ $query = "
     WHERE
         ( s.first_name LIKE '%$q%' OR s.last_name LIKE '%$q%'
           OR s.student_id LIKE '%$q%' OR s.department LIKE '%$q%' )
-        AND s.department = '$deptSafe' ORDER BY s.student_id LIMIT 25
+        AND s.department = '$deptSafe' AND s.student_id LIKE 'NB-%'
+        ORDER BY s.student_id LIMIT 25
 ";
 ```
 
 - The `$q` value is concatenated directly into SQL (`%$q%`); the
   department constraint is embedded as a **safe literal** (server-derived,
-  `escapeString()`ed) rather than a placeholder. A payload that terminates
-  the LIKE expression also escapes the clerk-view limit.
+  `escapeString()`ed) rather than a placeholder, and the default view is
+  further restricted to seeded `NB-*` records (fresh `NC-*` registrations
+  stay hidden). A payload that terminates the LIKE expression also escapes
+  the clerk-view limit.
 - The whole tail (`AND s.department ... LIMIT 25`) is kept on a single
   line on purpose: SQLite's `--` comments out to end-of-line, so a `--`
   payload cleanly kills the restriction + ordering + limit.
